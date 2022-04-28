@@ -1,0 +1,21 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.6.7'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+}
+
+group 'com.jack'
+version '2.6.8-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation(project(":spring-boot-project:spring-boot-starters:spring-boot-starter-web"))
+    testImplementation(project(":spring-boot-project:spring-boot-starters:spring-boot-starter-test"))
+}
+
+test {
+    useJUnitPlatform()
+}

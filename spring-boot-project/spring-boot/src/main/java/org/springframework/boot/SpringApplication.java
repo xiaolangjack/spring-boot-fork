@@ -256,14 +256,24 @@ public class SpringApplication {
 		this.resourceLoader = resourceLoader;
 		Assert.notNull(primarySources, "PrimarySources must not be null");
 		this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
+		// 1. 推测 web 应用类型（NODE, REACTIVE, SERVLET)
 		this.webApplicationType = WebApplicationType.deduceFromClasspath();
+		// 2. 从 spring.factories 中获取 BootstrapRegistryInitializer 对象
 		this.bootstrapRegistryInitializers = new ArrayList<>(
 				getSpringFactoriesInstances(BootstrapRegistryInitializer.class));
+
+		// 3. 加载并设置所有可用的初始化器：从 spring.factories 中获取 ApplicationContextInitializer 对象并且赋值到 SpringApplication 对象中
 		setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
+		// 4. 设置所有可用程序监听器：从 spring.factories 中获取 ApplicationListener 对象并赋值到 SpringApplication 对象中
 		setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+		// 5. 推测出 main 方法所在的类
 		this.mainApplicationClass = deduceMainApplicationClass();
 	}
 
+	/**
+	 * 推断出 main 函数的位置
+	 * @return
+	 */
 	private Class<?> deduceMainApplicationClass() {
 		try {
 			StackTraceElement[] stackTrace = new RuntimeException().getStackTrace();
@@ -287,26 +297,54 @@ public class SpringApplication {
 	 */
 	public ConfigurableApplicationContext run(String... args) {
 		long startTime = System.nanoTime();
+
 		DefaultBootstrapContext bootstrapContext = createBootstrapContext();
+
 		ConfigurableApplicationContext context = null;
+		// 设置 headless 系统属性
 		configureHeadlessProperty();
+		// 初始化 Spring 应用监听器列表： 从 spring.factories中得到 SpringApplicationRunListener 对象并设置到  SpringApplicationRunListeners 中
+		// 默认会得到这个监听器 EventPublishingRunListener
 		SpringApplicationRunListeners listeners = getRunListeners(args);
+
+		// 启动 Spring 应用程序的各个监听器
 		listeners.starting(bootstrapContext, this.mainApplicationClass);
+
 		try {
+			// 将 run方法的 args 参数封装为 DefaultApplicationArguments 对象
 			ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+
+
+			// 装配环境参数
+			// 1. 准备环境
 			ConfigurableEnvironment environment = prepareEnvironment(listeners, bootstrapContext, applicationArguments);
+			// 2. 配置 BeanInfo
 			configureIgnoreBeanInfo(environment);
+			// 3. 打印 SpringBoot 的 Banner
 			Banner printedBanner = printBanner(environment);
+
+			// 上下文
+			// 1. 根据应用类型创建应用上下文
 			context = createApplicationContext();
+			// 2. 设置应用上下文的启动指标
 			context.setApplicationStartup(this.applicationStartup);
+
+			// 3. 上下文前置处理： 上下文的环境设置、加载资源
 			prepareContext(bootstrapContext, context, environment, listeners, applicationArguments, printedBanner);
+			// 4. 刷新上下文： 启动tomcat等
 			refreshContext(context);
+			// 5. 上下文后置处理
 			afterRefresh(context, applicationArguments);
+
+			// 计时器结束
 			Duration timeTakenToStartup = Duration.ofNanos(System.nanoTime() - startTime);
 			if (this.logStartupInfo) {
 				new StartupInfoLogger(this.mainApplicationClass).logStarted(getApplicationLog(), timeTakenToStartup);
 			}
+			// 发布应用上下文启动完成
 			listeners.started(context, timeTakenToStartup);
+
+			// 执行 Runner 运行器
 			callRunners(context, applicationArguments);
 		}
 		catch (Throwable ex) {
@@ -330,6 +368,13 @@ public class SpringApplication {
 		return bootstrapContext;
 	}
 
+	/**
+	 * 准备环境
+	 * @param listeners
+	 * @param bootstrapContext
+	 * @param applicationArguments
+	 * @return
+	 */
 	private ConfigurableEnvironment prepareEnvironment(SpringApplicationRunListeners listeners,
 			DefaultBootstrapContext bootstrapContext, ApplicationArguments applicationArguments) {
 		// Create and configure the environment
@@ -376,16 +421,19 @@ public class SpringApplication {
 	private void prepareContext(DefaultBootstrapContext bootstrapContext, ConfigurableApplicationContext context,
 			ConfigurableEnvironment environment, SpringApplicationRunListeners listeners,
 			ApplicationArguments applicationArguments, Banner printedBanner) {
+		// 设置上下文的环境
 		context.setEnvironment(environment);
 		postProcessApplicationContext(context);
+		// 调用初始化器 ApplicationContextInitializer 去初始化上下文
 		applyInitializers(context);
+		// 将上下文中的 SpringApplicationRunListeners 就绪
 		listeners.contextPrepared(context);
 		bootstrapContext.close(context);
 		if (this.logStartupInfo) {
 			logStartupInfo(context.getParent() == null);
 			logStartupProfileInfo(context);
 		}
-		// Add boot specific singleton beans
+		// Add boot specific singleton beans：添加引导指定的单例 beans
 		ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
 		beanFactory.registerSingleton("springApplicationArguments", applicationArguments);
 		if (printedBanner != null) {
