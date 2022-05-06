@@ -290,9 +290,11 @@ class BeanDefinitionLoader {
 
 	/**
 	 * Check whether the bean is eligible for registration.
-	 * @param type candidate bean type
+	 *  检查 bean 是否符合注册条件。
+	 * @param type candidate bean type 候选bean的类型
 	 * @return true if the given bean type is eligible for registration, i.e. not a groovy
 	 * closure nor an anonymous class
+	 * 如果给定的 bean 类型符合注册条件，即不是 groovy 闭包也不是匿名类
 	 */
 	private boolean isEligible(Class<?> type) {
 		return !(type.isAnonymousClass() || isGroovyClosure(type) || hasNoConstructors(type));

@@ -307,7 +307,7 @@ public class SpringApplication {
 		// 默认会得到这个监听器 EventPublishingRunListener
 		SpringApplicationRunListeners listeners = getRunListeners(args);
 
-		// 启动 Spring 应用程序的各个监听器
+		// 启动 Spring 应用程序的各个监听器: 观察者模式
 		listeners.starting(bootstrapContext, this.mainApplicationClass);
 
 		try {
@@ -435,14 +435,18 @@ public class SpringApplication {
 		}
 		// Add boot specific singleton beans：添加引导指定的单例 beans
 		ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
+		// 添加单例 springApplicationArguments 对象
 		beanFactory.registerSingleton("springApplicationArguments", applicationArguments);
 		if (printedBanner != null) {
+			// 添加单例 springBootBanner 对象
 			beanFactory.registerSingleton("springBootBanner", printedBanner);
 		}
 		if (beanFactory instanceof AbstractAutowireCapableBeanFactory) {
+			// 设置是否循环引用
 			((AbstractAutowireCapableBeanFactory) beanFactory).setAllowCircularReferences(this.allowCircularReferences);
 			if (beanFactory instanceof DefaultListableBeanFactory) {
 				((DefaultListableBeanFactory) beanFactory)
+						// 设置是否允许 Bean 定义覆盖
 						.setAllowBeanDefinitionOverriding(this.allowBeanDefinitionOverriding);
 			}
 		}
@@ -720,6 +724,7 @@ public class SpringApplication {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Loading source " + StringUtils.arrayToCommaDelimitedString(sources));
 		}
+		// 创建 BeanDefinition ，是bean的定义信息
 		BeanDefinitionLoader loader = createBeanDefinitionLoader(getBeanDefinitionRegistry(context), sources);
 		if (this.beanNameGenerator != null) {
 			loader.setBeanNameGenerator(this.beanNameGenerator);

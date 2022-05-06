@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,7 +19,7 @@ import java.util.Map;
 public class TestController {
 
 	@GetMapping("/{name}")
-	public Map<String, Object> index(@PathVariable(required = false) String name){
+	public Map<String, Object> index(@PathVariable(required = false) String name) {
 		HashMap<String, Object> data = new HashMap<>();
 		data.put("data", name);
 		data.put("code", HttpStatus.OK.value());
