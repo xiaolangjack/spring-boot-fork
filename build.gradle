@@ -25,6 +25,11 @@ allprojects {
 	group "org.springframework.boot"
 
 	repositories {
+		// 添加国内镜像
+		maven { url "https://maven.aliyun.com/repository/public" }
+		maven { url "https://maven.aliyun.com/repository/gradle-plugin" }
+		maven { url "https://maven.aliyun.com/nexus/content/groups/public" }
+		maven { url "https://maven.aliyun.com/nexus/content/repositories/jcenter" }
 		mavenCentral()
 		if (version.contains('-')) {
 			maven { url "https://repo.spring.io/milestone" }
